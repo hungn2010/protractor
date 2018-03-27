@@ -1,6 +1,8 @@
 'use strict';
 
 var gulp = require('gulp');
+var clean = require('gulp-clean');
+const shell = require('gulp-shell');
 var clangFormat = require('clang-format');
 var gulpFormat = require('gulp-clang-format');
 var runSequence = require('run-sequence');
@@ -116,3 +118,37 @@ gulp.task('pretest', function(done) {
 });
 
 gulp.task('default',['prepublish']);
+
+gulp.task('bundleLibrary', shell.task([
+    'npm pack ./dist'
+]));
+gulp.task('cleanDist', function () {
+    return gulp.src('dist')
+        .pipe(clean());
+});
+gulp.task('copyResFilesToDist', function () {
+    return gulp.src([   'package.json',
+        'README.md','CHANGELOG.md','CONTRIBUTING.md','DEVELOPER.md',
+        '.jshintignore',
+        'ts_spec_config.json', 'tsconfig.json', 'tslint.json'])
+        .pipe(gulp.dest('./dist'));
+});
+
+gulp.task('copyCompFilesToDist', function () {
+    return gulp.src(['./built/**/**'])
+        .pipe(gulp.dest('./dist/built'));
+});
+
+gulp.task('copyBinToDist', function () {
+    return gulp.src(['./bin/**/**'])
+        .pipe(gulp.dest('./dist/bin'));
+});
+
+gulp.task('buildLibrary', function(done) {
+    runSequence(
+        'cleanDist'
+        , ['copyResFilesToDist', 'copyCompFilesToDist', 'copyBinToDist', 'bundleLibrary']
+        , done
+    );
+});
+

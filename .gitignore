@@ -19,3 +19,5 @@ node_modules/
 website/bower_components/
 website/build/
 website/docgen/build/
+dist/
+./package-lock.json

@@ -5,6 +5,7 @@ import {IError} from './exitCodes';
 import {isProtractorLocator, Locator} from './locators';
 import {Logger} from './logger';
 import {falseIfMissing} from './util';
+import {protractor} from "./ptor";
 
 let clientSideScripts = require('./clientsidescripts');
 
@@ -108,7 +109,7 @@ export class ElementArrayFinder extends WebdriverWebElement {
     // modified. (Locator can be modified by the user, but that should
     // rarely/never happen and it doesn't affect functionalities).
     return new ElementArrayFinder(
-        this.browser_, this.getWebElements, this.locator_, this.actionResults_);
+        protractor.browser, this.getWebElements, this.locator_, this.actionResults_);
   }
 
   /**
@@ -154,16 +155,16 @@ export class ElementArrayFinder extends WebdriverWebElement {
    * @returns {ElementArrayFinder}
    */
   all(locator: Locator): ElementArrayFinder {
-    let ptor = this.browser_;
+    //let ptor = protractor.browser;//this.browser_;
     let getWebElements = (): wdpromise.Promise<WebElement[]> => {
       if (this.getWebElements === null) {
         // This is the first time we are looking for an element
-        return ptor.waitForAngular('Locator: ' + locator)
+        return protractor.browser.waitForAngular('Locator: ' + locator)
             .then((): wdpromise.Promise<WebElement[]> => {
               if (isProtractorLocator(locator)) {
-                return locator.findElementsOverride(ptor.driver, null, ptor.rootEl);
+                return locator.findElementsOverride(protractor.browser.driver, null, protractor.browser.rootEl);
               } else {
-                return ptor.driver.findElements(locator);
+                return protractor.browser.driver.findElements(locator);
               }
             });
       } else {
@@ -172,7 +173,7 @@ export class ElementArrayFinder extends WebdriverWebElement {
           // a list of Promise<List<child_web_element>>
           let childrenPromiseList = parentWebElements.map((parentWebElement: WebElement) => {
             return isProtractorLocator(locator) ?
-                locator.findElementsOverride(ptor.driver, parentWebElement, ptor.rootEl) :
+                locator.findElementsOverride(protractor.browser.driver, parentWebElement, protractor.browser.rootEl) :
                 parentWebElement.findElements(locator);
           });
 
@@ -187,7 +188,7 @@ export class ElementArrayFinder extends WebdriverWebElement {
         });
       }
     };
-    return new ElementArrayFinder(this.browser_, getWebElements, locator);
+    return new ElementArrayFinder(protractor.browser, getWebElements, locator);
   }
 
   /**
@@ -236,7 +237,7 @@ export class ElementArrayFinder extends WebdriverWebElement {
       return this.getWebElements().then((parentWebElements: WebElement[]) => {
         let list = parentWebElements.map((parentWebElement: WebElement, index: number) => {
           let elementFinder =
-              ElementFinder.fromWebElement_(this.browser_, parentWebElement, this.locator_);
+              ElementFinder.fromWebElement_(protractor.browser, parentWebElement, this.locator_);
 
           return filterFn(elementFinder, index);
         });
@@ -247,7 +248,7 @@ export class ElementArrayFinder extends WebdriverWebElement {
         });
       });
     };
-    return new ElementArrayFinder(this.browser_, getWebElements, this.locator_);
+    return new ElementArrayFinder(protractor.browser, getWebElements, this.locator_);
   }
 
   /**
@@ -292,7 +293,7 @@ export class ElementArrayFinder extends WebdriverWebElement {
         return [parentWebElements[i]];
       });
     };
-    return new ElementArrayFinder(this.browser_, getWebElements, this.locator_).toElementFinder_();
+    return new ElementArrayFinder(protractor.browser, getWebElements, this.locator_).toElementFinder_();
   }
 
   /**
@@ -391,7 +392,7 @@ export class ElementArrayFinder extends WebdriverWebElement {
    * @private
    */
   toElementFinder_(): ElementFinder {
-    return new ElementFinder(this.browser_, this);
+    return new ElementFinder(protractor.browser, this);
   }
 
   /**
@@ -505,7 +506,7 @@ export class ElementArrayFinder extends WebdriverWebElement {
         throw noSuchErr;
       }
     });
-    return new ElementArrayFinder(this.browser_, getWebElements, this.locator_, actionResults);
+    return new ElementArrayFinder(protractor.browser, getWebElements, this.locator_, actionResults);
   }
 
   /**
@@ -517,7 +518,7 @@ export class ElementArrayFinder extends WebdriverWebElement {
   asElementFinders_(): wdpromise.Promise<ElementFinder[]> {
     return this.getWebElements().then((arr: WebElement[]) => {
       return arr.map((webElem: WebElement) => {
-        return ElementFinder.fromWebElement_(this.browser_, webElem, this.locator_);
+        return ElementFinder.fromWebElement_(protractor.browser, webElem, this.locator_);
       });
     });
   }
@@ -864,7 +865,7 @@ export class ElementFinder extends WebdriverWebElement {
     // Store a copy of the underlying elementArrayFinder, but with the more
     // restrictive getWebElements (which checks that there is only 1 element).
     this.elementArrayFinder_ = new ElementArrayFinder(
-        this.browser_, getWebElements, elementArrayFinder.locator(),
+        protractor.browser, getWebElements, elementArrayFinder.locator(),
         elementArrayFinder.actionResults_);
 
     WEB_ELEMENT_FUNCTIONS.forEach((fnName: string) => {
@@ -881,7 +882,7 @@ export class ElementFinder extends WebdriverWebElement {
     let getWebElements = () => {
       return wdpromise.when([webElem]);
     };
-    return new ElementArrayFinder(browser, getWebElements, locator).toElementFinder_();
+    return new ElementArrayFinder(protractor.browser, getWebElements, locator).toElementFinder_();
   }
 
   /**
@@ -892,7 +893,7 @@ export class ElementFinder extends WebdriverWebElement {
   clone(): ElementFinder {
     // A shallow copy is all we need since the underlying fields can never be
     // modified
-    return new ElementFinder(this.browser_, this.parentElementArrayFinder);
+    return new ElementFinder(protractor.browser, this.parentElementArrayFinder);
   }
 
   /**
@@ -927,7 +928,7 @@ export class ElementFinder extends WebdriverWebElement {
     let id = this.elementArrayFinder_.getWebElements().then((parentWebElements: WebElement[]) => {
       return parentWebElements[0];
     });
-    return new WebElementPromise(this.browser_.driver, id);
+    return new WebElementPromise(protractor.browser.driver, id);
   }
 
   /**
